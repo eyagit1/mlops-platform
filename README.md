@@ -1,95 +1,106 @@
 # MLOps Platform for AI Deployment
 
-Internship project — **ITGate Group**, Summer 2026
+Internship — **ITGate Group**, Summer 2026  
 Subject 2: *Plateforme MLOps pour déploiement IA*
 
-## Goal
+Full progress report: [REPORT.md](REPORT.md)
 
-Design and build a platform that handles the full lifecycle of a Machine Learning model:
-**training → experiment tracking → containerization → orchestrated deployment → CI/CD automation → monitoring.**
+## Lifecycle
 
-The focus of this project is the **platform and automation around the model**, not the sophistication of the model itself.
+**Train → Track → Register → Serve → Containerize → Orchestrate → CI/CD → Monitor**
 
-## Use case
+## Quick start
 
-A simple classification model trained on the classic **Iris dataset** (predicting flower species from petal/sepal measurements). This dataset is intentionally simple and fast to train — it exists only to exercise the MLOps pipeline end to end.
+```powershell
+# Train
+python src/train.py --local-model-path data/iris_model.pkl
 
-## Tech stack
+# Serve
+$env:MODEL_LOCAL_PATH="data/iris_model.pkl"
+uvicorn src.serve:app --port 8000
 
-| Layer | Tool |
-|---|---|
-| Model training & experiment tracking | MLflow |
-| Model serving | FastAPI |
-| Containerization | Docker |
-| Orchestration | Kubernetes |
-| CI/CD | GitHub Actions |
-| Monitoring & dashboards | Prometheus + Grafana |
-
-## Architecture
-
-```mermaid
-flowchart LR
-    A[Data: Iris dataset] --> B[train.py]
-    B -->|logs params/metrics/model| C[MLflow Tracking Server]
-    C --> D[MLflow Model Registry]
-    D --> E[serve.py - FastAPI]
-    E --> F[Docker image]
-    F --> G[Kubernetes Deployment]
-    G --> H[Kubernetes Service]
-    H --> I[End users / API clients]
-    G -->|exposes metrics| J[Prometheus]
-    J --> K[Grafana Dashboards]
-
-    subgraph CI/CD Pipeline
-        L[git push] --> M[Test]
-        M --> N[Build & Push Docker image]
-        N --> O[Deploy to Kubernetes]
-    end
-
-    L -.triggers.-> B
-    O -.updates.-> G
+# Full stack (API + Prometheus + Grafana)
+docker compose up --build
 ```
 
-**Flow summary:**
-1. `train.py` trains the model on the Iris dataset and logs parameters, metrics, and the model artifact to **MLflow**.
-2. The best model is promoted in the **MLflow Model Registry**.
-3. `serve.py` (FastAPI) loads the registered model and exposes a `/predict` REST endpoint.
-4. The API is containerized with **Docker** and deployed on **Kubernetes** (Deployment + Service, with health checks).
-5. A **CI/CD pipeline** (GitHub Actions) automates: run tests → build & push the Docker image → deploy to Kubernetes on every push.
-6. **Prometheus** scrapes metrics from the running API/cluster, and **Grafana** visualizes them (request volume, latency, error rate, pod health).
+| Service | URL |
+|---------|-----|
+| API docs | http://localhost:8000/docs |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3000 (admin/admin) |
+
+## API endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/predict` | Iris batch inference |
+| POST | `/classify` | Document classification + metadata extraction |
+| POST | `/rag/ingest` | Ingest documents into ChromaDB |
+| POST | `/rag/query` | Semantic vector search |
+| GET | `/health` | Readiness probe |
+| GET | `/metrics` | Prometheus scrape |
 
 ## Project structure
 
 ```
 mlops-platform/
-├── data/                   # dataset (or dataset-fetch script)
 ├── src/
-│   ├── train.py            # training + MLflow tracking
-│   └── serve.py            # FastAPI serving the model
+│   ├── train.py              # Training + MLflow
+│   ├── serve.py              # FastAPI gateway (4 core routes)
+│   ├── classifier.py         # Document AI
+│   ├── rag.py                # ChromaDB + sentence-transformers
+│   └── metrics.py            # Prometheus metrics
 ├── docker/
 │   ├── Dockerfile.train
-│   └── Dockerfile.serve
-├── k8s/
-│   ├── deployment.yaml
-│   └── service.yaml
-├── .github/workflows/
-│   └── mlops.yml           # CI/CD pipeline
-├── requirements.txt
-├── journal.md              # daily progress reports
-└── README.md
+│   └── Dockerfile.serve      # Multi-stage: train + serve + embed model
+├── k8s/                      # Namespace, Deployment, Service, Ingress, HPA
+├── monitoring/               # Prometheus + Grafana
+├── scripts/                  # Hyperparameter experiment sweeps
+├── tests/
+├── docker-compose.yml
+└── .github/workflows/mlops.yml
 ```
 
-## Status
+## Week-by-week status
 
-- [x] Day 1 — Project setup & scoping
-- [ ] Day 2 — Project structure & Python environment
-- [ ] Day 3 — Model training script
-- [ ] Day 4 — MLflow Tracking integration
-- [ ] Day 5 — Dockerize training
-- [ ] Week 2 — Containerization & Kubernetes
-- [ ] Week 3 — CI/CD
-- [ ] Week 4 — Monitoring & finalization
+| Week | Focus | Status |
+|------|-------|--------|
+| 1 | Training + MLflow + Docker train | Done |
+| 2 | Docker serve + Kubernetes | Done |
+| 3 | GitHub Actions CI/CD | Done |
+| 4 | Prometheus + Grafana | Done |
+| 5 | Document AI + RAG pipeline | Done |
+
+## MLflow
+
+```powershell
+mlflow ui --port 5000
+.\scripts\run_experiments.ps1
+```
+
+Register best model:
+
+```powershell
+$env:MLFLOW_REGISTER_TO_REGISTRY="1"
+python src/train.py --register-to-mlflow-registry --transition-stage Production
+```
+
+## Kubernetes
+
+```powershell
+kubectl apply -f k8s/
+kubectl get pods -n mlops
+```
+
+Deploy from CI requires GitHub secret `KUBE_CONFIG_B64`.
+
+## Tests
+
+```powershell
+pytest -q
+flake8 src tests --max-line-length=100
+```
 
 ## Author
 
-Intern @ ITGate Group — Summer 2026 internship program
+Intern @ ITGate Group — Summer 2026

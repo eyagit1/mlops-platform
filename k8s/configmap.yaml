@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlops-api-config
+  namespace: mlops
+data:
+  MLFLOW_MODEL_NAME: "iris-classifier"
+  MLFLOW_MODEL_STAGE: "Production"
+  MODEL_LOCAL_PATH: "/app/data/iris_model.pkl"

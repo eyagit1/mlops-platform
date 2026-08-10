@@ -1,0 +1,149 @@
+name: mlops
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  PYTHON_VERSION: "3.11"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/mlops-serving
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint
+        run: flake8 src tests --max-line-length=100
+
+      - name: Unit tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: pytest -q
+
+  train:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Train Iris model
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          MLFLOW_REGISTER_TO_REGISTRY: "0"
+          MLFLOW_EXPERIMENT_NAME: ci-iris-experiment
+          MLFLOW_RUN_NAME: ci-train
+        run: |
+          python src/train.py \
+            --local-model-path data/iris_model.pkl \
+            --n-estimators 50 \
+            --max-depth 5
+
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iris-model
+          path: data/iris_model.pkl
+
+  build:
+    needs: [test, train]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push serving image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.serve
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Build training image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.train
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/mlops-training:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository }}/mlops-training:latest
+
+  deploy:
+    needs: build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        env:
+          KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG_B64 }}
+        run: |
+          if [ -z "$KUBE_CONFIG_B64" ]; then
+            echo "KUBE_CONFIG_B64 not set — skipping Kubernetes deploy."
+            exit 0
+          fi
+          echo "$KUBE_CONFIG_B64" | base64 -d > kubeconfig
+          echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
+
+      - name: Deploy to Kubernetes
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG_B64 }}
+        run: |
+          if [ -z "$KUBE_CONFIG_B64" ]; then
+            echo "No cluster configured."
+            exit 0
+          fi
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secret.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/ingress.yaml
+          kubectl apply -f k8s/hpa.yaml
+          kubectl set image deployment/mlops-iris-api api=$IMAGE -n mlops
+          kubectl rollout status deployment/mlops-iris-api -n mlops --timeout=180s

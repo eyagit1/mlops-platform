@@ -1,0 +1,86 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "title": "Prediction Rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(mlops_predictions_total[1m]))",
+          "legendFormat": "predictions/s"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "title": "Prediction Latency (p95)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(mlops_prediction_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "title": "HTTP Requests by Status",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (status_code) (rate(mlops_http_requests_total[1m]))",
+          "legendFormat": "{{status_code}}"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "title": "Prediction Errors",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(increase(mlops_predictions_total{status=\"error\"}[1h]))",
+          "legendFormat": "errors"
+        }
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["mlops", "iris"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "timezone": "",
+  "title": "MLOps Iris API",
+  "uid": "mlops-iris-api",
+  "version": 1
+}

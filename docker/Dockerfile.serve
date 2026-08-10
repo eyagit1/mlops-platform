@@ -1,0 +1,46 @@
+# Stage 1: train a lightweight Iris model inside the image build
+FROM python:3.11-slim AS trainer
+
+WORKDIR /app
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir scikit-learn pandas joblib mlflow
+
+COPY src/train.py /app/src/train.py
+COPY src/__init__.py /app/src/__init__.py
+
+ENV PYTHONPATH=/app
+ENV MLFLOW_REGISTER_TO_REGISTRY=0
+
+RUN python /app/src/train.py \
+    --local-model-path /app/data/iris_model.pkl \
+    --n-estimators 50 \
+    --max-depth 5 \
+    --run-name docker-build-train
+
+# Stage 2: serving runtime
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Pre-download embedding weights so first RAG request is fast.
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+
+COPY src/ /app/src/
+COPY --from=trainer /app/data/iris_model.pkl /app/data/iris_model.pkl
+
+RUN mkdir -p /app/data/chroma_db /app/data/processed /app/data/raw /app/data/embeddings
+
+ENV PYTHONPATH=/app
+ENV MODEL_LOCAL_PATH=/app/data/iris_model.pkl
+ENV CHROMA_DB_PATH=/app/data/chroma_db
+ENV ANONYMIZED_TELEMETRY=False
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"
+
+CMD ["uvicorn", "src.serve:app", "--host", "0.0.0.0", "--port", "8000"]
