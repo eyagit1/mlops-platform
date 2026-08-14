@@ -146,6 +146,8 @@ class RAGQueryResponse(BaseModel):
     metadata: List[Dict[str, Any]]
     distances: List[float]
     collection_size: int
+
+
 class RAGAskRequest(BaseModel):
     question: str = Field(..., min_length=1)
     top_k: int = Field(default=3, ge=1, le=20)
@@ -156,6 +158,7 @@ class RAGAskResponse(BaseModel):
     answer: str
     sources: List[str]
     metadata: List[Dict[str, Any]]
+
 
 @app.get("/")
 def root() -> Dict[str, str]:
@@ -251,6 +254,8 @@ def query_rag_knowledgebase(payload: RAGQueryRequest) -> RAGQueryResponse:
     except Exception as exc:
         PREDICTION_COUNTER.labels(model_type="rag_query", status="error").inc()
         raise HTTPException(status_code=500, detail=f"RAG query error: {exc}") from exc
+
+
 @app.post("/rag/ask", response_model=RAGAskResponse)
 def ask_rag(payload: RAGAskRequest) -> RAGAskResponse:
     question = payload.question.strip()

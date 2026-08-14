@@ -1,7 +1,5 @@
 """Shared pytest fixtures for API tests."""
 
-from pathlib import Path
-
 import joblib
 import pytest
 from fastapi.testclient import TestClient

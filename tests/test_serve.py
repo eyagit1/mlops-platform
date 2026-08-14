@@ -1,10 +1,7 @@
 """Tests for inference, document AI, RAG, and monitoring endpoints."""
 
-from http import client
-import os
+from unittest.mock import MagicMock
 
-import pytest
-from unittest.mock import patch, MagicMock
 
 def test_rag_ask_success(client_with_model, rag_engine, monkeypatch):
     mock_completion = MagicMock()
@@ -26,6 +23,7 @@ def test_rag_ask_no_groq_key(client_with_model, rag_engine, monkeypatch):
 
     response = client_with_model.post("/rag/ask", json={"question": "test question"})
     assert response.status_code == 503
+
 
 def test_predict_returns_class_index(client_with_model) -> None:
     response = client_with_model.post(

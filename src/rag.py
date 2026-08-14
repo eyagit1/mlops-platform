@@ -4,12 +4,6 @@ from typing import Any, Dict, List, Optional
 
 import chromadb
 from chromadb.utils import embedding_functions
-import os
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-
-import chromadb
-from chromadb.utils import embedding_functions
 from groq import Groq
 
 
@@ -83,6 +77,7 @@ class RAGEngine:
             "distances": distances,
             "collection_size": self.collection.count(),
         }
+
     def generate_answer(self, question: str, top_k: int = 3) -> Dict[str, Any]:
         """Retrieve relevant chunks, then generate a grounded answer with Groq."""
         if self.groq_client is None:
