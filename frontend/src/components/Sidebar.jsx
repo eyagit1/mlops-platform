@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = [
   {
@@ -56,6 +57,14 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -84,13 +93,14 @@ export default function Sidebar() {
 
       <div className="sidebar-footer">
         <div className="user-row">
-          <div className="avatar">A</div>
-          <span className="user-name">admin</span>
+          <div className="avatar">{user?.initials || 'A'}</div>
+          <span className="user-name">{user?.email || 'admin@itgate.tn'}</span>
         </div>
-        <button type="button" className="logout-btn">
-          Déconnexion
+        <button type="button" className="logout-btn" onClick={handleLogout}>
+          Logout
         </button>
       </div>
     </aside>
   );
 }
+

@@ -107,6 +107,13 @@ a {
   gap: 0.75rem;
 }
 
+.topnav-brand-logo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 136, 204, 0.2));
+}
+
 .topnav-logo {
   width: 44px;
   height: 44px;
@@ -1275,46 +1282,407 @@ a {
   color: var(--notice-amber);
 }
 
-/* Responsive */
-@media (max-width: 1100px) {
-  .status-cards-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+/* TopNav User & Logout additions */
+.user-profile-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.65rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
 
-  .two-col,
-  .three-col {
-    grid-template-columns: 1fr;
-  }
+.user-avatar-small {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand-light-blue), var(--brand-deep-blue));
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
 
-  .admin-banner {
-    flex-direction: column;
-    align-items: flex-start;
+.user-email-text {
+  font-weight: 600;
+  color: var(--text-dark);
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logout-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  background: rgba(254, 242, 242, 0.8);
+  color: #dc2626;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.logout-nav-btn:hover {
+  background: #fee2e2;
+  border-color: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Login / Authentication Page Styles
+   ========================================================================== */
+.login-page-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 12% 15%, rgba(0, 163, 224, 0.1) 0%, transparent 45%),
+              radial-gradient(circle at 88% 85%, rgba(0, 85, 165, 0.12) 0%, transparent 50%),
+              #f8fafc;
+  position: relative;
+  overflow: hidden;
+  padding: 1.5rem;
+}
+
+.login-bg-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.glow-1 {
+  width: 380px;
+  height: 380px;
+  top: -80px;
+  left: -80px;
+  background: radial-gradient(circle, rgba(0, 163, 224, 0.22) 0%, rgba(0, 136, 204, 0) 70%);
+}
+
+.glow-2 {
+  width: 440px;
+  height: 440px;
+  bottom: -100px;
+  right: -100px;
+  background: radial-gradient(circle, rgba(0, 85, 165, 0.25) 0%, rgba(0, 111, 193, 0) 70%);
+}
+
+.login-card-container {
+  width: 100%;
+  max-width: 460px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 136, 204, 0.16);
+  border-radius: 20px;
+  box-shadow: 0 24px 50px rgba(0, 85, 165, 0.12), 0 4px 12px rgba(0, 0, 0, 0.03);
+  padding: 2.25rem 2rem;
+  position: relative;
+  z-index: 2;
+  animation: card-appear 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes card-appear {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
-@media (max-width: 768px) {
-  .sidebar {
-    position: static;
-    width: 100%;
-    min-height: auto;
-  }
-
-  .main-content {
-    margin-left: 0;
-    padding: 1rem;
-    padding-top: 84px;
-  }
-
-  .app-shell {
-    flex-direction: column;
-  }
-
-  .page-header {
-    flex-direction: column;
-  }
-
-  .status-cards-grid {
-    grid-template-columns: 1fr;
-  }
+.login-card-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
 }
+
+.login-logo-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.85rem;
+}
+
+.itgate-official-logo {
+  width: 140px;
+  height: auto;
+  max-height: 130px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 14px rgba(0, 136, 204, 0.2));
+  transition: transform 0.25s ease;
+}
+
+.itgate-official-logo:hover {
+  transform: scale(1.04);
+}
+
+.login-brand-subtitle {
+  display: block;
+  font-size: 0.86rem;
+  color: var(--text-gray);
+  margin-top: 0.2rem;
+  font-weight: 500;
+}
+
+.demo-creds {
+  font-size: 0.8rem;
+  color: var(--text-dark);
+}
+
+.demo-creds code {
+  background: rgba(2, 132, 199, 0.1);
+  color: #0369a1;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-family: 'Cascadia Code', monospace;
+  font-weight: 600;
+}
+
+.demo-fill-btn {
+  border: 1px solid #0284c7;
+  background: #fff;
+  color: #0284c7;
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.demo-fill-btn:hover {
+  background: #0284c7;
+  color: #fff;
+}
+
+/* Login alerts */
+.login-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  margin-bottom: 1.25rem;
+  animation: shake 0.3s ease-in-out;
+}
+
+.login-alert-error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.login-alert-info {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid rgba(29, 78, 216, 0.2);
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* Form controls */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.login-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.login-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.login-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-input-icon {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.login-input {
+  width: 100%;
+  padding: 0.75rem 2.6rem 0.75rem 2.45rem;
+  border: 1.5px solid rgba(15, 23, 42, 0.12);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 0.92rem;
+  color: var(--text-dark);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: #0088cc;
+  box-shadow: 0 0 0 3.5px rgba(0, 136, 204, 0.15);
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 8px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  transition: color 0.15s;
+}
+
+.password-toggle-btn:hover {
+  color: #0088cc;
+}
+
+/* Options (remember me / forgot password) */
+.login-form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  margin-top: -0.25rem;
+}
+
+.remember-me-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  color: var(--text-gray);
+  font-weight: 500;
+}
+
+.remember-me-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #0088cc;
+  cursor: pointer;
+}
+
+.forgot-password-link {
+  color: #0088cc;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s;
+}
+
+.forgot-password-link:hover {
+  color: #0055a5;
+  text-decoration: underline;
+}
+
+/* Submit button */
+.login-submit-btn {
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #00a3e0 0%, #0088cc 45%, #0055a5 100%);
+  color: white;
+  font-weight: 700;
+  font-size: 0.96rem;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 136, 204, 0.28);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  margin-top: 0.5rem;
+}
+
+.login-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 85, 165, 0.32);
+}
+
+.login-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.login-submit-btn:disabled {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+.btn-spinner-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.spinner-dot {
+  width: 14px;
+  height: 14px;
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Footer */
+.login-card-footer {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-light);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.login-security-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #047857;
+  background: #ecfdf5;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(4, 120, 87, 0.15);
+}
+
+.login-copyright {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
 
