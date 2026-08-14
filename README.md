@@ -26,8 +26,25 @@ docker compose up --build
 | Service | URL |
 |---------|-----|
 | API docs | http://localhost:8000/docs |
+| **React UI** | http://localhost:5173 |
 | Prometheus | http://localhost:9090 |
 | Grafana | http://localhost:3000 (admin/admin) |
+
+## React frontend
+
+Control-panel UI for testing all API capabilities (inference, document AI, RAG, observability).
+
+```powershell
+# Terminal 1 — backend
+$env:MODEL_LOCAL_PATH="data/iris_model.pkl"
+uvicorn src.serve:app --host 127.0.0.1 --port 8000 --reload
+
+# Terminal 2 — frontend
+npm --prefix frontend install
+npm --prefix frontend run dev
+```
+
+Open http://localhost:5173 — configure API URL via `frontend/.env.development` (`VITE_API_BASE_URL`).
 
 ## API endpoints
 
@@ -50,6 +67,8 @@ mlops-platform/
 │   ├── classifier.py         # Document AI
 │   ├── rag.py                # ChromaDB + sentence-transformers
 │   └── metrics.py            # Prometheus metrics
+├── frontend/                 # React + Vite control panel
+│   └── src/                  # 5 pages, shared components, API client
 ├── docker/
 │   ├── Dockerfile.train
 │   └── Dockerfile.serve      # Multi-stage: train + serve + embed model

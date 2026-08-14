@@ -1,10 +1,13 @@
 import os
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from dotenv import load_dotenv
 import joblib
 from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
@@ -12,10 +15,24 @@ from src.classifier import DocumentProcessor
 from src.metrics import LATENCY_HISTOGRAM, PREDICTION_COUNTER, REQUEST_COUNTER
 from src.rag import RAGEngine
 
+load_dotenv()
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL = None
-MODEL_PATH = os.getenv("MODEL_LOCAL_PATH", "data/iris_model.pkl")
+MODEL_PATH = os.getenv("MODEL_LOCAL_PATH", str(BASE_DIR / "data" / "iris_model.pkl"))
 doc_processor = DocumentProcessor()
 rag_engine: Optional[RAGEngine] = None
+
+
+def get_model():
+    global MODEL
+    if MODEL is None and os.path.exists(MODEL_PATH):
+        try:
+            MODEL = joblib.load(MODEL_PATH)
+            print(f"Loaded model successfully from {MODEL_PATH}")
+        except Exception as exc:
+            print(f"Failed to load model: {exc}")
+    return MODEL
 
 
 def get_rag_engine() -> RAGEngine:
@@ -27,13 +44,7 @@ def get_rag_engine() -> RAGEngine:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global MODEL
-    if os.path.exists(MODEL_PATH):
-        try:
-            MODEL = joblib.load(MODEL_PATH)
-            print(f"Loaded local model successfully from {MODEL_PATH}")
-        except Exception as exc:
-            print(f"Failed to load model at startup: {exc}")
+    get_model()
     yield
 
 
@@ -45,6 +56,23 @@ app = FastAPI(
     ),
     version="2.1.0",
     lifespan=lifespan,
+)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "*",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -140,10 +168,15 @@ def root() -> Dict[str, str]:
 
 @app.get("/health")
 def health_check() -> Dict[str, Any]:
+    model = get_model()
+    # Determine RAG readiness: require Groq API key or initialized rag_engine
+    groq_key = os.getenv("GROQ_API_KEY")
+    rag_ready = bool(groq_key) or ('rag_engine' in globals() and rag_engine is not None)
+
     return {
         "status": "healthy",
-        "model_loaded": MODEL is not None,
-        "rag_engine": "ready",
+        "model_loaded": model is not None,
+        "rag_engine": "ready" if rag_ready else "disabled",
     }
 
 
@@ -154,12 +187,13 @@ def metrics() -> Response:
 
 @app.post("/predict", response_model=IrisPredictResponse)
 def predict_iris(payload: IrisPredictRequest) -> IrisPredictResponse:
-    if MODEL is None:
+    model = get_model()
+    if model is None:
         PREDICTION_COUNTER.labels(model_type="iris", status="error").inc()
         raise HTTPException(status_code=503, detail="Model not loaded or unavailable")
 
     try:
-        predictions = MODEL.predict(payload.features).tolist()
+        predictions = model.predict(payload.features).tolist()
         PREDICTION_COUNTER.labels(model_type="iris", status="success").inc()
         return IrisPredictResponse(predictions=predictions)
     except Exception as exc:
